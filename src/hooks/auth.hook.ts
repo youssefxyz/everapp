@@ -1,0 +1,1 @@
+// Same content as useAuth.ts, just renamed file
