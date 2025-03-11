@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase/client';
 import { MessageContent } from '@/utils/supabase/messageTypes';
 import ChatInput from '@/components/chat/ChatInput';
 import conversationService from '@/utils/supabase/conversationService';
+// Add this import at the top with other imports
+import { MessageReactions } from '@/components/chat/MessageReactions';
+
 
 interface Message {
   id: string;
@@ -282,6 +285,7 @@ export default function ConversationPage() {
                       )}
                     </div>
                   </div>
+                  <MessageReactions messageId={message.id} userId={user.id} />
                 </div>
               </div>
             ))}
