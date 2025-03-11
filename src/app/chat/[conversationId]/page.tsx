@@ -19,6 +19,9 @@ interface Message {
   metadata?: any;
 }
 
+// Add useMessageStatus hook import
+import { useMessageStatus } from '@/hooks/useMessageStatus';
+
 export default function ConversationPage() {
   const params = useParams();
   const router = useRouter();
@@ -28,6 +31,18 @@ export default function ConversationPage() {
   const [user, setUser] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { messageStatuses, updateMessageStatus } = useMessageStatus(conversationId, user?.id || '');
+
+  // Add effect for marking messages as read
+  useEffect(() => {
+    if (user && messages.length > 0) {
+      messages.forEach(message => {
+        if (message.user_id !== user.id) {
+          updateMessageStatus(message.id, true);
+        }
+      });
+    }
+  }, [messages, user, conversationId, updateMessageStatus]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -256,8 +271,15 @@ export default function ConversationPage() {
                     ) : (
                       <p>{message.content}</p>
                     )}
-                    <div className="text-xs mt-1 opacity-75">
-                      {new Date(message.created_at).toLocaleTimeString()}
+                    <div className="text-xs mt-1 opacity-75 flex items-center justify-end gap-1">
+                      <span>{new Date(message.created_at).toLocaleTimeString()}</span>
+                      {message.user_id === user.id && (
+                        <span className="ml-1">
+                          {messageStatuses.find(status => status.messageId === message.id)?.isRead 
+                            ? '✓✓' 
+                            : '✓'}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

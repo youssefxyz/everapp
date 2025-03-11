@@ -11,6 +11,7 @@ interface UserSearchProps {
 export default function UserSearch({ onUserSelect, currentUserId }: UserSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
@@ -19,68 +20,49 @@ export default function UserSearch({ onUserSelect, currentUserId }: UserSearchPr
       return;
     }
 
+    setIsLoading(true);
     try {
-      // First check if the profiles table exists
-      const { data: tableInfo } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('count')
-        .limit(1);
+        .select('id, username')
+        .ilike('username', `%${term}%`)
+        .neq('id', currentUserId)
+        .limit(5);
 
-      // If profiles table exists, search by username
-      if (tableInfo !== null) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .ilike('username', `%${term}%`)
-          .neq('id', currentUserId)
-          .limit(5);
-
-        if (error) throw error;
-        setSearchResults(data || []);
-      } else {
-        // Fallback to searching users table
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, email')
-          .ilike('email', `%${term}%`)
-          .neq('id', currentUserId)
-          .limit(5);
-
-        if (error) throw error;
-        setSearchResults(data?.map(user => ({
-          id: user.id,
-          username: user.email.split('@')[0]
-        })) || []);
-      }
+      if (error) throw error;
+      setSearchResults(data || []);
     } catch (error) {
       console.error('Error searching users:', error);
       setSearchResults([]);
+    } finally {
+      setIsLoading(false);
     }
   };
+
   return (
     <div className="relative">
       <input
         type="text"
         value={searchTerm}
         onChange={(e) => handleSearch(e.target.value)}
-        placeholder="Search for users..."
-        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Search users..."
+        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+      {isLoading && (
+        <div className="absolute right-3 top-3">
+          <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+        </div>
+      )}
       {searchResults.length > 0 && (
-        <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+        <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
           {searchResults.map((user) => (
-            <button
+            <div
               key={user.id}
               onClick={() => onUserSelect(user.id, user.username)}
-              className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-2"
+              className="p-2 hover:bg-gray-100 cursor-pointer"
             >
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
-                {user.username[0].toUpperCase()}
-              </div>
-              <div>
-                <div className="font-medium">{user.username}</div>
-              </div>
-            </button>
+              {user.username}
+            </div>
           ))}
         </div>
       )}

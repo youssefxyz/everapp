@@ -1,42 +1,27 @@
 import { useEffect, useRef } from 'react';
-import { Message } from '@/types/chat';
+import type { Message } from '@/types/chat';
+import { Message as MessageComponent } from './Message';  // Import the component
 
 interface ChatMessagesProps {
   messages: Message[];
   currentUserId: string;
+  conversationId: string;
 }
 
-export const ChatMessages = ({ messages, currentUserId }: ChatMessagesProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
+export const ChatMessages = ({ messages, currentUserId, conversationId }: ChatMessagesProps) => {
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4">
       {messages.map((message) => (
-        <div
+        <MessageComponent
           key={message.id}
-          className={`flex ${message.user_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-        >
-          <div className={`max-w-[70%] ${message.user_id === currentUserId ? 'bg-blue-500 text-white' : 'bg-gray-100'} rounded-lg p-3`}>
-            <div className="text-sm font-medium mb-1">
-              {message.user_id === currentUserId ? 'You' : message.sender_name}
-            </div>
-            <p className="break-words">{message.content}</p>
-            <div className="text-xs opacity-75 mt-1">
-              {new Date(message.created_at).toLocaleTimeString()}
-              {message.is_edited && ' (edited)'}
-            </div>
-          </div>
-        </div>
+          id={message.id}
+          content={message.content}
+          userId={currentUserId}
+          timestamp={message.created_at}
+          isSender={message.user_id === currentUserId}
+          conversationId={conversationId}
+        />
       ))}
-      <div ref={messagesEndRef} />
     </div>
   );
 };

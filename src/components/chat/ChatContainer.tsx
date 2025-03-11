@@ -9,6 +9,8 @@ import { MessageContent } from '@/utils/supabase/messageTypes';
 // Remove SimpleChatInput import if you're not using it
 import SimpleChatInput from './SimpleChatInput';
 
+import { useMessageStatus } from '@/hooks/useMessageStatus';
+
 interface ChatContainerProps {
   conversationId: string;
   currentUserId: string;
@@ -19,15 +21,23 @@ export const ChatContainer = ({ conversationId, currentUserId }: ChatContainerPr
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const { updateMessageStatus } = useMessageStatus(conversationId, currentUserId);
+
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const messages = await messageService.fetchMessages(conversationId);
         setMessages(messages);
-        await messageService.markAsRead(conversationId, currentUserId);
+        // Mark messages as read when they are fetched
+        messages.forEach(message => {
+          if (message.user_id !== currentUserId) {
+            updateMessageStatus(message.id, true);
+          }
+        });
       } catch (error) {
         console.error('Error fetching messages:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
   
@@ -74,7 +84,7 @@ export const ChatContainer = ({ conversationId, currentUserId }: ChatContainerPr
     return () => {
       channel.unsubscribe();
     };
-  }, [conversationId, currentUserId]);
+  }, [conversationId, currentUserId, updateMessageStatus]);
   const handleSendMessage = async (messageData: MessageContent) => {
     try {
       if (messageData.type === 'text' || messageData.type === 'emoji') {
@@ -171,7 +181,11 @@ export const ChatContainer = ({ conversationId, currentUserId }: ChatContainerPr
   // Update the return statement to ensure we're using ChatInput
   return (
     <div className="flex flex-col h-full">
-      <ChatMessages messages={messages} currentUserId={currentUserId} />
+      <ChatMessages 
+        messages={messages} 
+        currentUserId={currentUserId}
+        conversationId={conversationId}
+      />
       <div ref={messagesEndRef} />
       <ChatInput 
         onSendMessage={handleSendMessage} 

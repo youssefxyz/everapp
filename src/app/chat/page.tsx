@@ -73,6 +73,16 @@ export default function ChatPage() {
     }
   };
 
+  const handleConversationSelect = async (conversationId: string) => {
+    if (!user) return;
+    
+    try {
+      router.push(`/chat/${conversationId}`);
+    } catch (error) {
+      console.error('Error handling conversation selection:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -106,7 +116,8 @@ export default function ChatPage() {
             </div>
             <ConversationList 
               conversations={conversations} 
-              isLoading={conversationsLoading} 
+              isLoading={conversationsLoading}
+              onConversationSelect={handleConversationSelect}
             />
           </div>
           <div className="flex-1 flex items-center justify-center text-gray-500 p-4">

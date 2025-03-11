@@ -4,9 +4,10 @@ import { Conversation } from '@/types/chat';
 interface ConversationListProps {
   conversations: Conversation[];
   isLoading: boolean;
+  onConversationSelect: (conversationId: string) => Promise<void>;
 }
 
-export const ConversationList = ({ conversations, isLoading }: ConversationListProps) => {
+export const ConversationList = ({ conversations, isLoading, onConversationSelect }: ConversationListProps) => {
   const router = useRouter();
 
   if (isLoading) {
